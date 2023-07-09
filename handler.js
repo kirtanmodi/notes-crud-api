@@ -1,7 +1,11 @@
 "use strict";
 
 const DynamoDB = require("aws-sdk/clients/dynamodb");
-const dynamoDb = new DynamoDB.DocumentClient({ region: "ap-south-1" });
+const dynamoDb = new DynamoDB.DocumentClient({
+  region: "ap-south-1",
+  max_retries: 10,
+  timeout: 10000,
+});
 const NOTES_TABLE_NAME = process.env.NOTES_TABLE_NAME;
 
 module.exports.createNote = async (event, context, cb) => {
