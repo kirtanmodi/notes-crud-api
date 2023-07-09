@@ -5,6 +5,8 @@ const dynamoDb = new DynamoDB.DocumentClient({ region: "ap-south-1" });
 const NOTES_TABLE_NAME = process.env.NOTES_TABLE_NAME;
 
 module.exports.createNote = async (event, context, cb) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
   let data = JSON.parse(event.body);
 
   try {
