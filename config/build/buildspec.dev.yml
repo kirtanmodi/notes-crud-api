@@ -8,7 +8,6 @@ phases:
     commands:
       - echo Installing serverless CLI
       - npm install -g serverless
-      - cd notes
       - echo Installing dependencies
       - npm install
   build:
