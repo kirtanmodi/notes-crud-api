@@ -5,11 +5,17 @@ frameworkVersion: "3"
 provider:
   name: aws
   runtime: nodejs18.x
-  stage: dev
+  stage: ${opt:stage, 'dev'}
   region: ap-south-1
-  
 
 functions:
+  authorizer:
+    handler: authorizer.handler
+    environment:
+      COGNITO_USER_POOL_ID: !Ref congitoUserPool
+      COGNITO_CLIENT_ID: !Ref congitoUserPoolWebClient
+      AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+
   createNote:
     handler: handler.createNote
     environment:
@@ -25,6 +31,8 @@ functions:
           method: post
           path: notes
           cors: true
+          authorizer: authorizer
+
   updateNote:
     handler: handler.updateNote
     environment:
@@ -40,6 +48,8 @@ functions:
           method: put
           path: notes/{id}
           cors: true
+          authorizer: authorizer
+
   deleteNote:
     handler: handler.deleteNote
     environment:
@@ -55,6 +65,8 @@ functions:
           method: delete
           path: notes/{id}
           cors: true
+          authorizer: authorizer
+
   getNote:
     handler: handler.getNotes
     environment:
@@ -70,20 +82,14 @@ functions:
           method: get
           path: notes
           cors: true
+          authorizer:
+            name: userpool_authorizer
+            # arn: ${ssm:/mynotes/${self:provider.stage}/userPoolArn} // for ssm parameter store
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt congitoUserPool.Arn
 
 plugins:
   - serverless-iam-roles-per-function
 
 resources:
- Resources:
-  notesTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: notes
-      AttributeDefinitions:
-        - AttributeName: notesId
-          AttributeType: S
-      KeySchema:
-        - AttributeName: notesId
-          KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
+  Resources: ${file(resources.yml)}

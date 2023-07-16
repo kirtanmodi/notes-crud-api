@@ -1,11 +1,20 @@
 "use strict";
 
-const DynamoDB = require("aws-sdk/clients/dynamodb");
-const dynamoDb = new DynamoDB.DocumentClient({
-  region: "ap-south-1",
-  max_retries: 10,
-  timeout: 10000,
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const {
+  PutCommand,
+  UpdateCommand,
+  DeleteCommand,
+  ScanCommand,
+  DynamoDBDocumentClient,
+} = require("@aws-sdk/lib-dynamodb");
+
+const client = new DynamoDBClient({
+  region: process.env.AWS_REGION,
 });
+
+const ddbDocClient = DynamoDBDocumentClient.from(client);
+
 const NOTES_TABLE_NAME = process.env.NOTES_TABLE_NAME;
 
 module.exports.createNote = async (event, context, cb) => {
@@ -24,7 +33,7 @@ module.exports.createNote = async (event, context, cb) => {
       ConditionExpression: "attribute_not_exists(notesId)",
     };
 
-    await dynamoDb.put(params).promise();
+    await ddbDocClient.send(new PutCommand(params));
 
     return {
       statusCode: 200,
@@ -60,7 +69,7 @@ module.exports.updateNote = async (event) => {
       ConditionExpression: "attribute_exists(notesId)",
     };
 
-    let result = await dynamoDb.update(params).promise();
+    let result = await ddbDocClient.send(new UpdateCommand(params));
 
     return {
       statusCode: 200,
@@ -86,7 +95,7 @@ module.exports.deleteNote = async (event) => {
       ConditionExpression: "attribute_exists(notesId)",
     };
 
-    await dynamoDb.delete(params).promise();
+    await ddbDocClient.send(new DeleteCommand(params));
 
     return {
       statusCode: 200,
@@ -106,7 +115,7 @@ module.exports.getNotes = async (event) => {
       TableName: NOTES_TABLE_NAME,
     };
 
-    let result = await dynamoDb.scan(params).promise();
+    let result = await ddbDocClient.send(new ScanCommand(params));
 
     return {
       statusCode: 200,
